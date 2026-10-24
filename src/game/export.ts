@@ -44,6 +44,7 @@ const INDEX_HTML = L(
   '  </head>',
   '  <body>',
   '    <div id="game"></div>',
+  '    <p id="boot">Загрузка ленты…</p>',
   '    <script type="module" src="./src/main.ts"></script>',
   '  </body>',
   '</html>',
@@ -53,13 +54,30 @@ const STYLES = L(
   'html, body { margin: 0; height: 100%; overflow: hidden; background: radial-gradient(circle at 50% 40%, #241a3d 0%, #0b0812 70%); }',
   '#game { width: 100vw; height: 100vh; }',
   'canvas { display: block; }',
+  '#boot { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; max-width: 80vw; color: #ff2e88; font: bold 22px "Segoe UI", Arial, sans-serif; text-align: center; white-space: pre-wrap; pointer-events: none; }',
 )
 
 const MAIN_TS = L(
   "import { createGame } from './game/main'",
   '',
-  "const el = document.getElementById('game')",
-  'if (el) createGame(el)',
+  "const boot = document.getElementById('boot')",
+  'const showError = (msg: string): void => {',
+  '  if (!boot) return',
+  "  boot.style.color = '#ff4757'",
+  "  boot.textContent = 'Ошибка запуска игры:\\n' + msg",
+  '}',
+  "window.addEventListener('error', (e) => showError(e.message || String(e.error)))",
+  "window.addEventListener('unhandledrejection', (e) => showError(String(e.reason)))",
+  '',
+  'try {',
+  "  const el = document.getElementById('game')",
+  '  if (el) createGame(el)',
+  '  const check = window.setInterval(() => {',
+  "    if (document.querySelector('#game canvas')) { boot?.remove(); window.clearInterval(check) }",
+  '  }, 200)',
+  '} catch (e) {',
+  '  showError(e instanceof Error ? e.message : String(e))',
+  '}',
 )
 
 // Relative base so the built site works from any sub-path (e.g. GitHub Pages /repo-name/)
