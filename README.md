@@ -2,7 +2,7 @@
 
 ## Запуск на Windows
 1. Установите Node.js (LTS) с https://nodejs.org — один раз.
-2. Дважды щёлкните `start.bat`. При первом запуске он скачает Phaser и Vite (нужен интернет только в этот момент).
+2. Дважды щёлкните `start.bat`. При первом запуске он скачает Phaser и Vite (интернет нужен только в этот момент).
 3. Игра откроется в браузере. Дальше интернет не нужен.
 
 ## Запуск вручную (любая ОС)
@@ -11,9 +11,10 @@ npm install
 npm run dev
 ```
 
-## Сборка
-`npm run build` создаёт папку `dist/`. Браузеры не запускают ES-модули с `file://`,
-поэтому откройте её через локальный сервер: `npm run preview`.
+## GitHub Pages
+1. Залейте содержимое этой папки в КОРЕНЬ репозитория (рядом с package.json должна лежать папка .github).
+2. Settings → Pages → Build and deployment → Source: **GitHub Actions**.
+3. Сделайте любой push (или Actions → Deploy to GitHub Pages → Run workflow).
+4. Через 1–2 минуты игра появится по адресу https://<логин>.github.io/<репозиторий>/
 
 Код игры — в `src/game/`. Подробное описание — в `src/game/README.md`.
-мяу
