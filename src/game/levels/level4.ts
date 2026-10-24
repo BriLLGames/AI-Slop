@@ -203,8 +203,8 @@ async function skipReveal(g: GameScene): Promise<void> {
   await g.wait(1000)
   g.openGate('g3')
   g.persistFlag('gate_g3')
-  await g.banner('СЕРВЕР ЖДЁТ', 'Ворота открылись сами. Это не к добру. Это к контенту.', CSS.pink, 1600)
-  await g.say('ТЫ', ['...Ладно. Значит, дальше сам.'])
+  await g.banner('ВОРОТА ОТКРЫЛИСЬ', 'Сами. Это не к добру. Это к контенту.', CSS.pink, 1600)
+  await g.say('ТЫ', ['...Ладно. Значит, дальше сам.', 'Портал наверняка ведёт к серверу. Даже вероятность 50 на 50 — это уже больше, чем у алгоритма.'])
   g.setMode('play')
   objective(g)
 }
