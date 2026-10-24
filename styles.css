@@ -1,3 +1,4 @@
 html, body { margin: 0; height: 100%; overflow: hidden; background: radial-gradient(circle at 50% 40%, #241a3d 0%, #0b0812 70%); }
 #game { width: 100vw; height: 100vh; }
 canvas { display: block; }
+#boot { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; max-width: 80vw; color: #ff2e88; font: bold 22px "Segoe UI", Arial, sans-serif; text-align: center; white-space: pre-wrap; pointer-events: none; }
