@@ -16,3 +16,4 @@ npm run dev
 поэтому откройте её через локальный сервер: `npm run preview`.
 
 Код игры — в `src/game/`. Подробное описание — в `src/game/README.md`.
+мяу
