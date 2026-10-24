@@ -52,6 +52,7 @@ export class MenuList {
   private alive = true
   private w: number
   private h: number
+  private gap: number
 
   constructor(scene: Phaser.Scene, x: number, y: number, items: MenuItem[], opts: { width?: number; size?: number; gap?: number; depth?: number } = {}) {
     this.items = items
@@ -59,6 +60,7 @@ export class MenuList {
     const size = opts.size ?? 22
     this.h = size + 22
     const gap = opts.gap ?? 10
+    this.gap = gap
     this.container = scene.add.container(x, y).setDepth(opts.depth ?? 9000)
     items.forEach((it, i) => {
       const yy = i * (this.h + gap)
@@ -91,7 +93,7 @@ export class MenuList {
       const t = this.texts[i]
       if (!bg || !t) return
       const sel = i === this.index
-      const yy = i * (this.h + 10)
+      const yy = i * (this.h + this.gap)
       bg.clear()
       bg.fillStyle(sel ? COLORS.pink : COLORS.panel, sel ? 1 : 0.85)
       bg.fillRoundedRect(-this.w / 2, yy, this.w, this.h, 12)
