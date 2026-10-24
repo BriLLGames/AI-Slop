@@ -20,6 +20,7 @@ export class Hud {
   private bossName: Phaser.GameObjects.Text
   private damage: Phaser.GameObjects.Rectangle
   private toasts: Phaser.GameObjects.Text[] = []
+  private timerText: Phaser.GameObjects.Text
   private last = { hp: -1, maxHp: -1, aura: -1, frag: -1 }
   private auraShown = 0
 
@@ -51,6 +52,13 @@ export class Hud {
     this.root.add(this.bossRoot)
 
     this.damage = ui.add.rectangle(W / 2, H / 2, W, H, COLORS.red, 0).setDepth(99)
+    this.timerText = txt(ui, W / 2, 16, '', 26, CSS.yellow, { big: true, stroke: 6 }).setOrigin(0.5, 0).setDepth(110).setVisible(false)
+  }
+
+  /** Countdown for timed challenges. Pass null to hide. */
+  setTimer(text: string | null, urgent = false): void {
+    if (text === null) { this.timerText.setVisible(false); return }
+    this.timerText.setVisible(true).setText(text).setColor(urgent ? CSS.red : CSS.yellow)
   }
 
   update(run: RunState, hint: string, dt: number): void {
@@ -146,5 +154,6 @@ export class Hud {
     this.toasts = []
     this.root.destroy()
     this.damage.destroy()
+    this.timerText.destroy()
   }
 }
