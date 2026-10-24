@@ -38,7 +38,7 @@ export interface World {
   items: Phaser.Physics.Arcade.Group
   exit: Phaser.Physics.Arcade.Image | null
   npcSpawns: { spec: NpcSpec; x: number; y: number }[]
-  enemySpawns: { type: EnemyType; x: number; y: number }[]
+  enemySpawns: { type: EnemyType; x: number; y: number; dir?: number; sweep?: number }[]
   interactables: Interactable[]
   plates: Record<string, { img: Phaser.GameObjects.Image; x: number; y: number; tex: string; on: boolean }>
   marks: Record<string, { x: number; y: number; tx: number; ty: number }>
@@ -140,7 +140,7 @@ export function buildWorld(scene: Phaser.Scene, def: LevelDef, levelNo: number, 
           if (!spec) break
           switch (spec.kind) {
             case 'npc': w.npcSpawns.push({ spec, x: cx, y: cy + 12 }); break
-            case 'enemy': w.enemySpawns.push({ type: spec.type, x: cx, y: cy + 12 }); break
+            case 'enemy': w.enemySpawns.push({ type: spec.type, x: cx, y: cy + 12, ...(spec.dir !== undefined ? { dir: spec.dir } : {}), ...(spec.sweep !== undefined ? { sweep: spec.sweep } : {}) }); break
             case 'item': addItem(scene, w, cx, cy, spec.type, id, collected); break
             case 'prop': {
               const img = scene.add.image(cx, cy + 22, spec.tex).setOrigin(0.5, 1).setDepth(cy + 14)
