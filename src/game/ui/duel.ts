@@ -8,7 +8,7 @@ import { Sfx } from '../audio'
 import { Fx } from '../fx'
 import { txt } from './widgets'
 
-export type DuelKind = 'timing' | 'rhythm' | 'sequence' | 'dodge' | 'observe'
+export type DuelKind = 'timing' | 'rhythm' | 'sequence' | 'dodge' | 'observe' | 'combo' | 'hold'
 
 export interface DuelConfig {
   name: string
@@ -71,6 +71,13 @@ export class Duel {
   private tell: 'stare' | 'blink' | 'side' | 'down' | 'up' = 'stare'
   private tellT = 0
   private sinceReal = 0
+  private comboSeq: number[] = []
+  private comboIdx = 0
+  private comboT = 0
+  private comboMax = 1
+  private holdV = 0
+  private holding = false
+  private ctrlRef: Controls | null = null
 
   constructor(ui: Phaser.Scene, cfg: DuelConfig, glasses: boolean) {
     this.ui = ui
@@ -157,6 +164,22 @@ export class Duel {
         this.sinceReal = 0
         this.info.setText(this.cfg.tutorial ? 'Следи за глазами. E — только когда он отвёл взгляд ВНИЗ' : 'Крупный план. Жди нужный момент.')
         break
+      case 'combo': {
+        const len = Math.min(7, 3 + Math.floor(this.hitsDone / 2) + (s > 1.1 ? 1 : 0))
+        this.comboSeq = Array.from({ length: len }, () => Math.floor(Math.random() * 4))
+        this.comboIdx = 0
+        this.comboMax = (MOG.comboTime + len * 0.25) * this.mult / s
+        this.comboT = this.comboMax
+        this.info.setText(this.cfg.tutorial ? 'Комбо-ратио: быстро нажми стрелки по порядку (WASD или стрелки)' : 'Комбо! WASD по порядку')
+        break
+      }
+      case 'hold':
+        this.holdV = 0
+        this.holding = false
+        this.zoneW = MOG.holdZone * this.mult
+        this.zoneC = 0.55 + Math.random() * 0.3
+        this.info.setText(this.cfg.tutorial ? 'Невозмутимость: ЗАЖМИ E и отпусти, когда шкала в зелёной зоне' : 'Держи E... и отпусти вовремя')
+        break
     }
   }
 
@@ -209,6 +232,7 @@ export class Duel {
 
   update(dt: number, ctrl: Controls): void {
     this.t += dt
+    this.ctrlRef = ctrl
     this.lines.rotation += dt * 0.15
     const e = ctrl.take('E')
     const sp = ctrl.take('SPACE')
@@ -305,12 +329,42 @@ export class Duel {
         if (sp) this.outcome('miss', 'ЭТО НЕ ТА КНОПКА')
         break
       }
+      case 'combo': {
+        const c = this.ctrlRef
+        if (!c) break
+        this.comboT -= dt
+        const pressed = [c.take('W') || c.take('UP'), c.take('A') || c.take('LEFT'), c.take('S') || c.take('DOWN'), c.take('D') || c.take('RIGHT')]
+        const k = pressed.findIndex((v) => v)
+        if (e || sp) { this.outcome('miss', 'ТОЛЬКО СТРЕЛКИ!'); break }
+        if (k >= 0) {
+          if (k === this.comboSeq[this.comboIdx]) {
+            this.comboIdx++
+            Sfx.play('select', 1 + this.comboIdx * 0.1)
+            if (this.comboIdx >= this.comboSeq.length) this.outcome('hit')
+          } else this.outcome('miss', 'НЕ ТА СТРЕЛКА')
+        } else if (this.comboT <= 0) this.outcome('miss', 'СЛИШКОМ МЕДЛЕННО')
+        break
+      }
+      case 'hold': {
+        const down = this.ctrlRef?.down('E') ?? false
+        if (sp) { this.outcome('miss', 'ЭТО НЕ ТА КНОПКА'); break }
+        if (down) {
+          this.holding = true
+          const wobble = 0.55 + Math.abs(Math.sin(this.t * (2.5 + this.speed * 2))) * 0.9
+          this.holdV += dt * 0.42 * this.speed * wobble
+          if (this.holdV >= 1) { this.holdV = 1; this.outcome('miss', 'ПЕРЕДЕРЖАЛ') }
+        } else if (this.holding) {
+          this.outcome(Math.abs(this.holdV - this.zoneC) <= this.zoneW / 2 ? 'hit' : 'miss', this.holdV < this.zoneC ? 'СЛИШКОМ РАНО СДАЛСЯ' : 'ПЕРЕДЕРЖАЛ')
+        }
+        break
+      }
     }
   }
 
   private draw(): void {
     const g = this.g
     g.clear()
+    if (this.kind !== 'combo' || this.phase !== 'round') this.comboTexts.forEach((t) => t.setVisible(false))
     const cx = W / 2
     const cy = 262
     // progress + lives
@@ -379,7 +433,47 @@ export class Duel {
         }
         break
       }
+      case 'combo': {
+        const n = this.comboSeq.length
+        const gap = 70
+        const x0 = cx - ((n - 1) * gap) / 2
+        const glyph = ['↑', '←', '↓', '→']
+        this.comboTexts.forEach((t) => t.setVisible(false))
+        this.comboSeq.forEach((k, i) => {
+          const done = i < this.comboIdx
+          g.fillStyle(done ? COLORS.green : i === this.comboIdx ? COLORS.pink : 0x2a2140, 1).fillRoundedRect(x0 + i * gap - 28, cy - 30, 56, 60, 12)
+          g.lineStyle(3, 0xffffff, i === this.comboIdx ? 1 : 0.4).strokeRoundedRect(x0 + i * gap - 28, cy - 30, 56, 60, 12)
+          const t = this.comboText(i)
+          t.setText(glyph[k] ?? '?').setPosition(x0 + i * gap, cy).setVisible(this.phase === 'round')
+        })
+        const r = Math.max(0, this.comboT / this.comboMax)
+        g.fillStyle(0x000000, 0.6).fillRect(cx - 200, cy + 44, 400, 8)
+        g.fillStyle(r > 0.3 ? COLORS.cyan : COLORS.red, 1).fillRect(cx - 200, cy + 44, 400 * r, 8)
+        break
+      }
+      case 'hold': {
+        const bh = 200
+        const x = cx - 22
+        const y0 = cy + bh / 2
+        g.fillStyle(0x000000, 0.7).fillRoundedRect(x - 8, y0 - bh - 8, 60, bh + 16, 12)
+        g.fillStyle(0x2a2140, 1).fillRect(x, y0 - bh, 44, bh)
+        g.fillStyle(COLORS.green, 0.9).fillRect(x, y0 - bh * (this.zoneC + this.zoneW / 2), 44, bh * this.zoneW)
+        g.fillStyle(this.holding ? COLORS.yellow : 0x888899, 1).fillRect(x + 8, y0 - bh * this.holdV, 28, bh * this.holdV)
+        g.lineStyle(3, 0xffffff, 0.8).strokeRect(x, y0 - bh, 44, bh)
+        break
+      }
     }
+  }
+
+  private comboTexts: Phaser.GameObjects.Text[] = []
+  private comboText(i: number): Phaser.GameObjects.Text {
+    let t = this.comboTexts[i]
+    if (!t) {
+      t = txt(this.ui, 0, 0, '', 40, CSS.white, { big: true, stroke: 6 }).setOrigin(0.5)
+      this.root.add(t)
+      this.comboTexts[i] = t
+    }
+    return t
   }
 
   destroy(): void {
