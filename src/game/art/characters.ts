@@ -98,6 +98,10 @@ export function drawPerson(ctx: Ctx, o: PersonOpts, frame: number): void {
     rr(ctx, 24 - bw / 2 - 2, 28, bw + 4, 26, 6); fillStroke(ctx, o.shirt)
   }
   // head
+  if (acc.includes('bearEars')) {
+    ctx.beginPath(); ctx.arc(14, hy - 10, 5.5, 0, Math.PI * 2); fillStroke(ctx, o.skin)
+    ctx.beginPath(); ctx.arc(34, hy - 10, 5.5, 0, Math.PI * 2); fillStroke(ctx, o.skin)
+  }
   if (acc.includes('hood')) { ctx.beginPath(); ctx.arc(24, hy, 15, 0, Math.PI * 2); fillStroke(ctx, o.shirt) }
   ctx.beginPath(); ctx.arc(24, hy, 12, 0, Math.PI * 2); fillStroke(ctx, o.skin)
   // hair
@@ -145,6 +149,14 @@ export function drawPerson(ctx: Ctx, o: PersonOpts, frame: number): void {
   if (acc.includes('sunglasses')) {
     ctx.fillStyle = '#111'; rr(ctx, 14, hy - 2, 9, 6, 2); ctx.fill(); rr(ctx, 25, hy - 2, 9, 6, 2); ctx.fill(); ctx.fillRect(22, hy, 4, 1.5)
     ctx.fillStyle = 'rgba(34,228,255,0.7)'; ctx.fillRect(15.5, hy - 1, 3, 1.3); ctx.fillRect(26.5, hy - 1, 3, 1.3)
+  }
+  if (acc.includes('roundGlasses')) {
+    ctx.strokeStyle = OUT; ctx.lineWidth = 1.5
+    ctx.beginPath(); ctx.arc(19, hy + 1, 4.5, 0, Math.PI * 2); ctx.moveTo(33.5, hy + 1); ctx.arc(29, hy + 1, 4.5, 0, Math.PI * 2); ctx.moveTo(23.5, hy + 1); ctx.lineTo(24.5, hy + 1); ctx.stroke()
+  }
+  if (acc.includes('snout')) {
+    ctx.fillStyle = '#d9b48a'; ctx.beginPath(); ctx.ellipse(24, hy + 6, 6, 4, 0, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = OUT; ctx.beginPath(); ctx.ellipse(24, hy + 4.5, 2.2, 1.5, 0, 0, Math.PI * 2); ctx.fill()
   }
   if (acc.includes('mustache')) {
     ctx.fillStyle = '#3b2412'; ctx.beginPath(); ctx.ellipse(21, hy + 5, 4, 1.8, 0.3, 0, Math.PI * 2); ctx.ellipse(27, hy + 5, 4, 1.8, -0.3, 0, Math.PI * 2); ctx.fill()
