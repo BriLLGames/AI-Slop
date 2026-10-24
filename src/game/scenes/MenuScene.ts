@@ -10,6 +10,10 @@ import { soundItems } from '../ui/overlays'
 import { downloadGameZip } from '../export'
 
 const CARD_COLORS = [0xff2e88, 0x22e4ff, 0x9b5cff, 0xffd23f, 0x5dff9b]
+
+/** Optional host hook (only the Retool shell provides it) that publishes the project to GitHub. */
+type PublishHook = (progress: (s: string) => void) => Promise<string>
+const publishHook = (): PublishHook | undefined => (window as unknown as { __EOV_PUBLISH?: PublishHook }).__EOV_PUBLISH
 const CARD_TITLES = ['ТОП-10 ПОЗ ДЛЯ АУРЫ', 'КОТ ИГРАЕТ НА ГИТАРЕ', 'ЧЕЛ МОГНУЛ СВОЁ ОТРАЖЕНИЕ', 'POV: ТЫ NPC', 'ЛАЙФХАК: НЕ СПАТЬ', 'ЕЩЁ ОДНО ВИДЕО', 'SIGMA ГРИНД 5 УТРА', 'БРЕЙНРОТ #9001']
 
 export class MenuScene extends Phaser.Scene {
@@ -100,9 +104,25 @@ export class MenuScene extends Phaser.Scene {
       { label: () => 'Управление', action: () => this.showControls() },
       { label: () => 'Звук', action: () => this.showSound() },
       { label: () => 'Скачать игру (ZIP)', action: () => void this.download() },
+      ...(publishHook() ? [{ label: () => 'Опубликовать на GitHub', action: () => void this.publish() }] : []),
       { label: () => 'Выход', action: () => this.showExit() },
     ]
-    this.menu = new MenuList(this, W / 2, 178, items, { width: 360, size: 20 })
+    this.menu = new MenuList(this, W / 2, 172, items, { width: 360, size: 18, gap: 6 })
+  }
+
+  private async publish(): Promise<void> {
+    const hook = publishHook()
+    if (!hook || this.zipping) return
+    this.zipping = true
+    const note = txt(this, W / 2, H - 44, 'Публикую файлы на GitHub...', 15, CSS.yellow, { big: true, stroke: 4 }).setOrigin(0.5, 1).setDepth(9999)
+    try {
+      const msg = await hook((s) => note.setText(s))
+      note.setText(msg).setColor(CSS.green)
+    } catch (e) {
+      note.setText(`Ошибка публикации: ${e instanceof Error ? e.message : String(e)}`).setColor(CSS.red)
+    }
+    this.time.delayedCall(8000, () => note.destroy())
+    this.zipping = false
   }
 
   private zipping = false
