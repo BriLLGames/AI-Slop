@@ -24,6 +24,16 @@ export const PEOPLE: Record<string, PersonOpts> = {
   fan: { skin: '#e8b48a', shirt: '#ffd23f', pants: '#3a3f58', hair: '#5a4030', style: 'curly', eyes: 'happy', acc: ['phone'] },
   banned: { skin: '#dddddd', shirt: '#555555', pants: '#333333', hair: '#777777', style: 'long', eyes: 'tired', acc: ['hood'] },
   admin: { skin: '#f2c7a5', shirt: '#3b5bdb', pants: '#2b2d42', hair: '#6b4f3a', style: 'curly', bodyW: 26, eyes: 'tired', acc: ['headset'] },
+  // ---- expansion characters
+  grandma: { skin: '#f0c8a8', shirt: '#9b5cff', pants: '#5a3a7a', hair: '#e6e6e6', style: 'bun', eyes: 'happy', acc: ['phone', 'roundGlasses'] },
+  ratioKing: { skin: '#e8b48a', shirt: '#ff4757', pants: '#2b2d42', hair: '#111111', style: 'slick', bodyW: 26, acc: ['crown', 'sunglasses', 'chain'] },
+  trollkid: { skin: '#f2c7a5', shirt: '#5dff9b', pants: '#3a3f58', hair: '#c46a2b', style: 'spiky', bodyW: 18, eyes: 'angry', acc: ['headset'] },
+  bear: { skin: '#8b5a2b', shirt: '#8b5a2b', pants: '#6b4423', hair: '#8b5a2b', style: 'bald', bodyW: 30, eyes: 'happy', acc: ['bearEars', 'snout'], shoes: '#6b4423' },
+  hamster: { skin: '#e8b07a', shirt: '#f6f5fb', pants: '#7a5a22', hair: '#e8b07a', style: 'bald', bodyW: 30, eyes: 'happy', acc: ['bearEars', 'roundGlasses', 'tie'] },
+  pixelkid: { skin: '#ffd23f', shirt: '#22e4ff', pants: '#ff2e88', hair: '#ffd23f', style: 'bald', eyes: 'happy', bodyW: 20 },
+  oleg: { skin: '#cfd8c6', shirt: '#3a3a5a', pants: '#2b2d42', hair: '#555555', style: 'long', eyes: 'tired', hunch: 4, acc: ['hood', 'phone', 'phoneGlow', 'mustache'] },
+  warden: { skin: '#b9a6d9', shirt: '#1b1030', pants: '#1b1030', hair: '#111111', style: 'slick', bodyW: 28, eyes: 'angry', acc: ['hood', 'sunglasses', 'headset'] },
+  influencer: { skin: '#f2c7a5', shirt: '#ffd23f', pants: '#2b2d42', hair: '#2b1b12', style: 'slick', acc: ['hoodie', 'headphones', 'sunglasses', 'chain', 'star'] },
 }
 
 export function generateAllTextures(scene: Phaser.Scene): void {
