@@ -32,7 +32,7 @@ export interface Settings {
   music: boolean
 }
 
-const SAVE_KEY = 'eov_save_v1'
+const SAVE_KEY = 'eov_save_v2'
 const SETTINGS_KEY = 'eov_settings_v1'
 
 const memory: Record<string, string> = {}
