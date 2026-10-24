@@ -4,11 +4,11 @@ import type { GameScene } from '../scenes/GameScene'
 import type { NpcSpec } from '../entities/npc'
 import type { EnemyType } from '../entities/enemies'
 
-export type ItemType = 'fragment' | 'heart' | 'rose' | 'fan'
+export type ItemType = 'fragment' | 'heart' | 'rose' | 'fan' | 'floppy'
 
 export type Spec =
   | NpcSpec
-  | { kind: 'enemy'; type: EnemyType }
+  | { kind: 'enemy'; type: EnemyType; dir?: number; sweep?: number }
   | { kind: 'item'; type: ItemType }
   | { kind: 'prop'; tex: string; solid?: boolean; name?: string; read?: string[]; big?: boolean }
   | { kind: 'gate'; id: string }
@@ -38,6 +38,10 @@ export interface LevelDef {
   legend: Record<string, Spec>
   zones?: Zone[]
   hazardCycle?: boolean
+  /** Darkness: only a circle around the hero stays visible. */
+  dark?: boolean
+  /** Called when a drone spots the player. Return true if handled. */
+  onSpotted?: (g: GameScene) => boolean
   /** Runs once when the level is first entered (not after checkpoint reloads). */
   intro?: (g: GameScene) => Promise<void>
   /** Runs on every (re)load after entities exist: restore state from flags, set objective. */
