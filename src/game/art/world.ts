@@ -44,6 +44,20 @@ function floorPattern(ctx: Ctx, i: number, base: string, alt: boolean, seed: num
       ctx.beginPath(); ctx.moveTo(0, 12); ctx.lineTo(18, 12); ctx.lineTo(24, 18); ctx.lineTo(48, 18); ctx.moveTo(30, 48); ctx.lineTo(30, 34); ctx.lineTo(40, 28); ctx.stroke()
       ctx.fillStyle = 'rgba(34,228,255,0.35)'; ctx.fillRect(16, 10, 4, 4); ctx.fillRect(28, 32, 4, 4)
       break
+    case 5: // comment section: paper-like with text lines
+      ctx.fillStyle = alt ? 'rgba(80,150,255,0.25)' : 'rgba(0,0,0,0.06)'
+      for (let y = 8; y < TILE; y += 10) ctx.fillRect(6, y, 20 + ((seed * y) % 18), 3)
+      ctx.strokeStyle = 'rgba(0,0,0,0.08)'; ctx.strokeRect(0.5, 0.5, TILE - 1, TILE - 1)
+      break
+    case 6: // 2007 archive: old CRT-ish checker
+      ctx.fillStyle = alt ? 'rgba(255,255,255,0.12)' : 'rgba(255,200,120,0.08)'
+      ctx.fillRect(0, 0, 24, 24); ctx.fillRect(24, 24, 24, 24)
+      ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.strokeRect(0.5, 0.5, TILE - 1, TILE - 1)
+      break
+    case 7: // dark feed: faint scanlines
+      ctx.fillStyle = alt ? 'rgba(155,92,255,0.18)' : 'rgba(155,92,255,0.06)'
+      for (let y = 0; y < TILE; y += 6) ctx.fillRect(0, y, TILE, 1)
+      break
   }
 }
 
@@ -281,5 +295,94 @@ export function generateWorldTextures(scene: Phaser.Scene): void {
   makeTex(scene, 'auraIcon', 28, 28, (c) => {
     const g = c.createRadialGradient(14, 14, 2, 14, 14, 13); g.addColorStop(0, '#fff'); g.addColorStop(0.5, '#ffd23f'); g.addColorStop(1, 'rgba(255,46,136,0)')
     c.fillStyle = g; c.beginPath(); c.arc(14, 14, 13, 0, Math.PI * 2); c.fill()
+  })
+  generateExpansionTextures(scene)
+}
+
+const shadowEllipse = (c: Ctx, rx = 14): void => { c.fillStyle = 'rgba(0,0,0,0.3)'; c.beginPath(); c.ellipse(24, 66, rx, 4, 0, 0, Math.PI * 2); c.fill() }
+
+function generateExpansionTextures(scene: Phaser.Scene): void {
+  // ---- decor for chapters 5..7 (comments, archive, dark feed)
+  makeTex(scene, 'deco_5a', TILE, 72, (c) => { // giant speech bubble
+    shadowEllipse(c)
+    rr(c, 2, 14, 44, 34, 10); c.fillStyle = '#ffffff'; c.fill(); c.strokeStyle = OUT; c.lineWidth = 2; c.stroke()
+    c.beginPath(); c.moveTo(12, 47); c.lineTo(10, 60); c.lineTo(22, 47); c.fillStyle = '#ffffff'; c.fill(); c.stroke()
+    c.fillStyle = '#5b6b8c'; c.fillRect(9, 22, 30, 3); c.fillRect(9, 29, 22, 3); c.fillRect(9, 36, 26, 3)
+  })
+  makeTex(scene, 'deco_5b', TILE, 72, (c) => { // thumbs-down statue
+    shadowEllipse(c)
+    rr(c, 10, 50, 28, 14, 3); c.fillStyle = '#38445e'; c.fill(); c.strokeStyle = OUT; c.lineWidth = 2; c.stroke()
+    c.fillStyle = '#ff4757'; c.font = 'bold 34px sans-serif'; c.textAlign = 'center'; c.fillText('👎', 24, 46)
+  })
+  makeTex(scene, 'deco_6a', TILE, 72, (c) => { // CRT monitor
+    shadowEllipse(c)
+    rr(c, 4, 18, 40, 34, 4); c.fillStyle = '#d8d0b8'; c.fill(); c.strokeStyle = OUT; c.lineWidth = 2; c.stroke()
+    rr(c, 9, 23, 30, 22, 3); c.fillStyle = '#1d3b2a'; c.fill()
+    c.fillStyle = '#5dff9b'; c.font = 'bold 7px monospace'; c.textAlign = 'left'; c.fillText('LOL', 12, 32); c.fillText('>_', 12, 41)
+    c.fillStyle = '#b8b098'; c.fillRect(16, 52, 16, 10)
+  })
+  makeTex(scene, 'deco_6b', TILE, 72, (c) => { // stack of floppies
+    shadowEllipse(c)
+    ;['#3b5bdb', '#ff4757', '#ffd23f', '#222'].forEach((col, k) => { rr(c, 8 + (k % 2) * 4, 50 - k * 10, 28, 10, 2); c.fillStyle = col; c.fill(); c.strokeStyle = OUT; c.lineWidth = 1.5; c.stroke() })
+  })
+  makeTex(scene, 'deco_7a', TILE, 72, (c) => { // dead phone screen pillar
+    shadowEllipse(c)
+    rr(c, 10, 4, 28, 60, 6); c.fillStyle = '#0b0812'; c.fill(); c.strokeStyle = '#9b5cff'; c.lineWidth = 2; c.stroke()
+    c.fillStyle = 'rgba(155,92,255,0.35)'; for (let k = 0; k < 6; k++) c.fillRect(14, 10 + k * 9, 20, 5)
+  })
+  makeTex(scene, 'deco_7b', TILE, 72, (c) => { // swirl of infinite scroll
+    shadowEllipse(c, 12)
+    c.strokeStyle = '#9b5cff'; c.lineWidth = 3
+    c.beginPath(); for (let a = 0; a < Math.PI * 6; a += 0.2) { const r = 2 + a * 2.2; c.lineTo(24 + Math.cos(a) * r, 36 + Math.sin(a) * r) } c.stroke()
+  })
+  // ---- interactive props
+  const pin = (c: Ctx, on: boolean): void => {
+    shadowEllipse(c)
+    rr(c, 4, 10, 40, 34, 8); c.fillStyle = on ? '#fff6c0' : '#ffffff'; c.fill(); c.strokeStyle = on ? '#ffd23f' : OUT; c.lineWidth = on ? 3 : 2; c.stroke()
+    c.fillStyle = '#5b6b8c'; c.fillRect(10, 20, 26, 3); c.fillRect(10, 27, 18, 3); c.fillRect(10, 34, 22, 3)
+    c.fillStyle = on ? '#ff4757' : '#9fb3d9'; c.beginPath(); c.arc(38, 12, 6, 0, Math.PI * 2); c.fill()
+    c.fillStyle = '#4a4a66'; c.fillRect(22, 44, 4, 18)
+  }
+  makeTex(scene, 'pin', TILE, 64, (c) => pin(c, false))
+  makeTex(scene, 'pin_on', TILE, 64, (c) => pin(c, true))
+  const pedestalItem = (c: Ctx, glyph: string, col: string, filled: boolean): void => {
+    shadowEllipse(c)
+    rr(c, 10, 36, 28, 24, 3); c.fillStyle = '#808080'; c.fill(); c.strokeStyle = OUT; c.lineWidth = 2; c.stroke()
+    rr(c, 6, 32, 36, 6, 2); c.fillStyle = '#c0c0c0'; c.fill(); c.stroke()
+    if (filled) { c.fillStyle = col; c.font = 'bold 22px sans-serif'; c.textAlign = 'center'; c.fillText(glyph, 24, 28) }
+    else { c.strokeStyle = 'rgba(255,255,255,0.5)'; c.setLineDash([3, 3]); c.strokeRect(14, 8, 20, 20); c.setLineDash([]) }
+  }
+  makeTex(scene, 'exhibit', TILE, 64, (c) => pedestalItem(c, '', '#fff', false))
+  makeTex(scene, 'exhibit_on', TILE, 64, (c) => pedestalItem(c, '★', '#ffd23f', true))
+  makeTex(scene, 'floppy', 32, 32, (c) => {
+    rr(c, 4, 4, 24, 24, 2); c.fillStyle = '#3b5bdb'; c.fill(); c.strokeStyle = '#fff'; c.lineWidth = 2; c.stroke()
+    c.fillStyle = '#c0c0c0'; c.fillRect(9, 4, 14, 8); c.fillStyle = '#fff'; c.fillRect(8, 18, 16, 10)
+  })
+  makeTex(scene, 'drone_0', 96, 128, (c) => {
+    c.scale(2, 2)
+    c.fillStyle = 'rgba(0,0,0,0.3)'; c.beginPath(); c.ellipse(24, 60, 10, 3, 0, 0, Math.PI * 2); c.fill()
+    c.strokeStyle = OUT; c.lineWidth = 2
+    c.beginPath(); c.arc(24, 30, 14, 0, Math.PI * 2); c.fillStyle = '#1b2440'; c.fill(); c.stroke()
+    c.beginPath(); c.arc(24, 30, 9, 0, Math.PI * 2); c.fillStyle = '#ffffff'; c.fill()
+    c.beginPath(); c.arc(24, 30, 5, 0, Math.PI * 2); c.fillStyle = '#ff2e88'; c.fill()
+    c.fillStyle = '#9b5cff'; c.fillRect(2, 22, 8, 3); c.fillRect(38, 22, 8, 3)
+  })
+  makeTex(scene, 'drone_1', 96, 128, (c) => {
+    c.scale(2, 2)
+    c.fillStyle = 'rgba(0,0,0,0.3)'; c.beginPath(); c.ellipse(24, 60, 10, 3, 0, 0, Math.PI * 2); c.fill()
+    c.strokeStyle = OUT; c.lineWidth = 2
+    c.beginPath(); c.arc(24, 28, 14, 0, Math.PI * 2); c.fillStyle = '#1b2440'; c.fill(); c.stroke()
+    c.beginPath(); c.arc(24, 28, 9, 0, Math.PI * 2); c.fillStyle = '#ffffff'; c.fill()
+    c.beginPath(); c.arc(24, 28, 5, 0, Math.PI * 2); c.fillStyle = '#ff2e88'; c.fill()
+    c.fillStyle = '#9b5cff'; c.fillRect(0, 20, 10, 3); c.fillRect(38, 20, 10, 3)
+  })
+  makeTex(scene, 'arrowDown', TILE, TILE, (c) => {
+    c.fillStyle = 'rgba(155,92,255,0.35)'
+    c.beginPath(); c.moveTo(14, 10); c.lineTo(34, 10); c.lineTo(34, 24); c.lineTo(42, 24); c.lineTo(24, 40); c.lineTo(6, 24); c.lineTo(14, 24); c.closePath(); c.fill()
+  })
+  makeTex(scene, 'vignette', 512, 512, (c) => {
+    const g = c.createRadialGradient(256, 256, 60, 256, 256, 256)
+    g.addColorStop(0, 'rgba(5,3,10,0)'); g.addColorStop(0.55, 'rgba(5,3,10,0.55)'); g.addColorStop(1, 'rgba(5,3,10,0.97)')
+    c.fillStyle = g; c.fillRect(0, 0, 512, 512)
   })
 }
