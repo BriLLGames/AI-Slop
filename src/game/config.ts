@@ -58,6 +58,8 @@ export const MOG = {
   dodgeWindow: 0.5, // seconds to press SPACE after "УДАР!"
   counterWindow: 0.75, // seconds to press E after a dodge
   observeShow: 0.95, // seconds each NPC "tell" is visible
+  comboTime: 2.6, // seconds to enter a WASD combo
+  holdZone: 0.16, // share of the "hold" meter that counts as success
 }
 
 export interface Theme {
@@ -115,6 +117,30 @@ export const THEMES: Theme[] = [
     wallTop: '#22e4ff', wallFace: '#0e5a7a', wallLine: '#9cf3ff',
     hazard: '#ff2e88', bg: 0x070912, accent: COLORS.cyan,
     music: { tempo: 140, root: 45, scale: [0, 2, 3, 6, 7, 8], bass: [0, 0, 5, 4], lead: [0, 3, 5, 4, 3, 1, 0, 2] },
+  },
+  {
+    name: 'СЕКЦИЯ КОММЕНТАРИЕВ',
+    subtitle: 'Здесь все знают лучше тебя',
+    floorA: '#e9e6f2', floorB: '#e2dfee', floorAlt: '#d4ecff',
+    wallTop: '#5b6b8c', wallFace: '#38445e', wallLine: '#9fb3d9',
+    hazard: '#ff4757', bg: 0x2a2f3d, accent: COLORS.red,
+    music: { tempo: 118, root: 53, scale: [0, 2, 4, 7, 9], bass: [0, 4, 2, 3], lead: [0, 2, 4, 2, 3, 1, 0, 4] },
+  },
+  {
+    name: 'АРХИВ МЕМОВ 2007',
+    subtitle: 'Здесь тренды доживают свои дни',
+    floorA: '#5a4a3a', floorB: '#544536', floorAlt: '#3f6b8f',
+    wallTop: '#c0c0c0', wallFace: '#808080', wallLine: '#ffffff',
+    hazard: '#ff9f43', bg: 0x1f1a14, accent: COLORS.orange,
+    music: { tempo: 100, root: 57, scale: [0, 2, 4, 5, 7, 9, 11], bass: [0, 5, 3, 4], lead: [4, 2, 0, 2, 4, 4, 4, 2] },
+  },
+  {
+    name: 'ТЁМНАЯ ЛЕНТА',
+    subtitle: 'Конца нет. Есть только следующее видео.',
+    floorA: '#16121f', floorB: '#130f1b', floorAlt: '#2a1030',
+    wallTop: '#4b2a6b', wallFace: '#2a1540', wallLine: '#9b5cff',
+    hazard: '#9b5cff', bg: 0x05030a, accent: COLORS.purple,
+    music: { tempo: 84, root: 43, scale: [0, 1, 3, 5, 6, 8], bass: [0, 0, 1, 0], lead: [5, 3, 1, 0, 1, 3, 2, 0] },
   },
 ]
 
