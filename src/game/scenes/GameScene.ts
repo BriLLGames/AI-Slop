@@ -104,8 +104,12 @@ export class GameScene extends Phaser.Scene {
     this.bullets = new Bullets(this)
     this.enemyGroup = this.physics.add.group()
     for (const s of this.world.npcSpawns) this.npcs.push(new Npc(this, s.x, s.y, s.spec))
-    for (const s of this.world.enemySpawns) this.spawnEnemy(s.type, s.x, s.y)
+    for (const s of this.world.enemySpawns) this.spawnEnemy(s.type, s.x, s.y, s.dir, s.sweep)
     this.laserG = this.add.graphics().setDepth(8000)
+    this.challenge = null
+    this.spotCd = 0
+    this.lastSafe = null
+    this.vignette = def.dark ? this.add.image(0, 0, 'vignette').setScale(3.2).setDepth(9500) : null
 
     this.setupPhysics()
 
@@ -117,7 +121,7 @@ export class GameScene extends Phaser.Scene {
 
     this.ui = this.scene.get('UI')
     this.scene.bringToTop('UI')
-    this.hud = new Hud(this.ui, `${this.levelNo}/5 · ${theme.name}`)
+    this.hud = new Hud(this.ui, `${this.levelNo}/${LEVELS.length} · ${theme.name}`)
     this.dialog = new Dialog(this.ui)
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.cleanup())
 
@@ -173,7 +177,7 @@ export class GameScene extends Phaser.Scene {
     })
     this.physics.add.overlap(p, this.enemyGroup, (_a, b) => {
       const e = (b as Phaser.Physics.Arcade.Sprite).getData('enemy') as Enemy | undefined
-      if (e && e.alive) this.hurt(1, e.x, e.y)
+      if (e && e.alive && e.type !== 'drone') this.hurt(1, e.x, e.y)
     })
     this.physics.add.overlap(p, w.items, (_a, b) => this.pickup(b as Phaser.Physics.Arcade.Image))
     for (const c of w.checkpoints) this.physics.add.overlap(p, c.img, () => this.activateCheckpoint(c.id))
@@ -217,8 +221,11 @@ export class GameScene extends Phaser.Scene {
       this.levelTime += dt
       this.bullets.update(dt)
       this.hazards(dt)
+      this.stealth(dt)
+      this.tickChallenge(dt)
       this.def.update?.(this, dt)
     }
+    this.vignette?.setPosition(this.player.x, this.player.y - 16)
     this.hud.update(Store.run, play ? this.hint() : '', dt)
   }
 
@@ -384,8 +391,21 @@ export class GameScene extends Phaser.Scene {
       if (!e.alive) continue
       if (Phaser.Math.Distance.Between(this.player.x, this.player.y, e.x, e.y) < TUNING.pulseRadius + 10) {
         if (e.hit(1, this.player.x, this.player.y)) this.onEnemyKilled(e)
-        else Sfx.play('hit')
+        else if (e.type !== 'drone') Sfx.play('hit')
       }
+    }
+    if (Store.run.flags['reflect']) {
+      let n = 0
+      for (const obj of this.bullets.group.getChildren()) {
+        const b = obj as Phaser.Physics.Arcade.Image
+        if (!b.active) continue
+        if (Phaser.Math.Distance.Between(this.player.x, this.player.y - 16, b.x, b.y) < TUNING.pulseRadius + 30) {
+          this.fx.burst(b.x, b.y, COLORS.cyan, 4, 120, 300)
+          this.bullets.kill(b)
+          n++
+        }
+      }
+      if (n > 0) this.fx.floatText(this.player.x, this.player.y - 70, n > 2 ? `RATIO ×${n}` : 'ОТВЕТ НА ХЕЙТ', CSS.cyan, 18)
     }
     this.def.onPulse?.(this)
   }
@@ -397,10 +417,71 @@ export class GameScene extends Phaser.Scene {
     this.addAura(TUNING.auraPerKill)
   }
 
-  spawnEnemy(type: EnemyType, x: number, y: number): Enemy {
-    const e = new Enemy(this, this.enemyGroup, x, y, type)
+  spawnEnemy(type: EnemyType, x: number, y: number, dir?: number, sweep?: number): Enemy {
+    const e = new Enemy(this, this.enemyGroup, x, y, type, dir ?? 90, sweep ?? 50)
     this.enemies.push(e)
     return e
+  }
+
+  // ------------------------------------------------------------------ stealth (drones)
+  private spotCd = 0
+  private lastSafe: { x: number; y: number } | null = null
+  private vignette: Phaser.GameObjects.Image | null = null
+
+  isSolidAt(x: number, y: number): boolean {
+    const ch = this.world.grid[Math.floor(y / TILE)]?.[Math.floor(x / TILE)] ?? '#'
+    return ch === '#' || ch === '%' || ch === 'o'
+  }
+
+  private stealth(dt: number): void {
+    this.spotCd = Math.max(0, this.spotCd - dt)
+    for (const [id, m] of Object.entries(this.world.marks)) {
+      if (id.startsWith('safe') && Phaser.Math.Distance.Between(this.player.x, this.player.y, m.x, m.y) < 70) this.lastSafe = { x: m.x, y: m.y + 12 }
+    }
+    if (this.spotCd > 0) return
+    for (const e of this.enemies) {
+      if (e.type !== 'drone' || !e.canSee(this.player.x, this.player.y, (x, y) => this.isSolidAt(x, y))) continue
+      e.alarm = 1.2
+      this.spotCd = 1.4
+      Sfx.play('error')
+      this.cameras.main.flash(200, 255, 46, 136)
+      if (this.def.onSpotted?.(this)) return
+      this.toast('ТЕБЯ ЗАМЕТИЛ АЛГОРИТМ. Отправлен в рекомендации…', CSS.red)
+      this.player.inv = 0
+      this.hurt(1, this.player.x, this.player.y - 1)
+      if (this.mode !== 'play') return
+      const back = this.lastSafe ?? this.world.start
+      ;(this.player.sprite.body as Phaser.Physics.Arcade.Body).reset(back.x, back.y)
+      this.player.inv = 1.2
+      return
+    }
+  }
+
+  // ------------------------------------------------------------------ timed challenges
+  private challenge: { t: number; label: string; onTimeout: () => void } | null = null
+
+  startChallenge(seconds: number, label: string, onTimeout: () => void): void {
+    this.challenge = { t: seconds, label, onTimeout }
+    Sfx.play('phase')
+  }
+
+  endChallenge(): void {
+    this.challenge = null
+    this.hud.setTimer(null)
+  }
+
+  get challengeActive(): boolean { return this.challenge !== null }
+
+  private tickChallenge(dt: number): void {
+    const c = this.challenge
+    if (!c) return
+    c.t -= dt
+    this.hud.setTimer(`${c.label}  ${Math.max(0, c.t).toFixed(1)}`, c.t < 5)
+    if (c.t <= 0) {
+      this.endChallenge()
+      Sfx.play('mogLose')
+      c.onTimeout()
+    }
   }
 
   hurt(n: number, fromX: number, fromY: number): void {
@@ -462,7 +543,7 @@ export class GameScene extends Phaser.Scene {
     } else {
       Store.run.items[type] = (Store.run.items[type] ?? 0) + 1
       Sfx.play('pickup')
-      this.toast(type === 'rose' ? 'Подобрана виртуальная роза 🌹' : 'Подобран вентилятор для позирования', CSS.pink)
+      this.toast(type === 'rose' ? 'Подобрана виртуальная роза 🌹' : type === 'floppy' ? 'Подобрана дискета с мемом 2007 года' : 'Подобран вентилятор для позирования', CSS.pink)
     }
     Store.run.collected.push(id)
     this.fx.burst(img.x, img.y, type === 'heart' ? COLORS.red : COLORS.cyan, 14, 150, 450, 'spark')
